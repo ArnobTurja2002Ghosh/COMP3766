@@ -30,11 +30,35 @@ def compute_ik(position, orientation):
     end_effector_ori=orientation
     joint_angles = np.zeros(6)  # Placeholder for the actual joint angles, comment this line
     joint_angles[0]= np.arctan2(-end_effector_pos[0],end_effector_pos[1])-np.arctan2(d1, np.sqrt(end_effector_pos[0]**2+end_effector_pos[1]**2-d1**2))
-    print((end_effector_pos[0]**2+end_effector_pos[1]**2+end_effector_pos[2]**2-d1**2-a2**2-a3**2)/(2*a2*a3))
+    #print((end_effector_pos[0]**2+end_effector_pos[1]**2+end_effector_pos[2]**2-d1**2-a2**2-a3**2)/(2*a2*a3))
     joint_angles[2]= np.arccos((end_effector_pos[0]**2+end_effector_pos[1]**2+end_effector_pos[2]**2-d1**2-a2**2-a3**2)/(2*a2*a3))
     joint_angles[1]= -np.arctan2(end_effector_pos[2],np.sqrt(end_effector_pos[0]**2+end_effector_pos[1]**2-d1**2))-np.arctan2(a3*np.sin(joint_angles[2]),a2+a3*np.cos(joint_angles[2]))
-    joint_angles[3:6]=np.arccos(np.dot(end_effector_ori[:,0],np.array([0,0,1]))),np.arccos(np.dot(end_effector_ori[:,1],np.array([0,0,1]))),np.arccos(np.dot(end_effector_ori[:,2],np.array([0,0,1])))
-    print(joint_angles)
+    #joint_angles[3:6]=np.arccos(np.dot(end_effector_ori[:,0],np.array([0,0,1]))),np.arccos(np.dot(end_effector_ori[:,1],np.array([0,0,1]))),np.arccos(np.dot(end_effector_ori[:,2],np.array([0,0,1])))
+    
+    R=np.array([
+        [1,0,0],
+        [0, np.cos(joint_angles[2]), -np.sin(joint_angles[2])],
+        [0, np.sin(joint_angles[2]), np.cos(joint_angles[2])]
+    ]) @ np.array([
+        [1,0,0],
+        [0, np.cos(joint_angles[1]), -np.sin(joint_angles[1])],
+        [0, np.sin(joint_angles[1]), np.cos(joint_angles[1])]
+    ]) @ np.array([
+        [np.cos(joint_angles[0]), np.sin(joint_angles[0]), 0],
+        [-np.sin(joint_angles[0]), np.cos(joint_angles[0]), 0],
+        [0,0,1] 
+    ])@np.array([
+        [0, 0, 1],
+        [-1, 0, 0],
+        [0, -1, 0]
+    ]).transpose()
+    print(R)
+    print(np.cos(np.arctan2(R[1][0], R[0][0]))*np.cos(np.arctan2(-R[2][0], np.sqrt(R[0][0]**2 + R[1][0]**2))))
+    
+    joint_angles[3]= np.arctan2(R[1][0], R[0][0])
+    joint_angles[4]= np.arctan2(-R[2][0], np.sqrt(R[0][0]**2 + R[1][0]**2))
+    joint_angles[5]=np.arctan2(R[2][1], R[2][2])
+    
     return joint_angles
 
 def pose_callback(msg):
